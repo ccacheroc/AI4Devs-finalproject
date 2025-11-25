@@ -17,11 +17,16 @@ Puedes añadir adicionalmente la conversación completa como link o archivo adju
 ## 1. Descripción general del producto
 
 **Prompt 1:**
+- **LLM**: ChatGPT 5.1 Thinking
+- **Prompt**: En base al documento APP AVV-EstructuraProyecto_nuevo.docx genérame los siguientes párrafos en markdown dentro de un cuadro de código para copiar y pegar: - Propósito del producto. Qué valor aporta, qué soluciona, y para quién. - Características principales. Enumera y describe las características y funcionalidades específicas que tiene el producto para satisfacer las necesidades identificadas.
 
 **Prompt 2:**
+- **LLM**: ChatGPT 5.1 Thinking
+- **Prompt**:
 
 **Prompt 3:**
-
+- **LLM**: ChatGPT 5.1 Thinking
+- **Prompt**:
 ---
 
 ## 2. Arquitectura del Sistema
