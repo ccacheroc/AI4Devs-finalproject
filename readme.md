@@ -15,7 +15,6 @@
 <a id="ficha-del-proyecto"></a>
 ## 0. Ficha del proyecto
 
-
 ### **0.1. Tu nombre completo:**
 Cristina Cachero
 
@@ -45,7 +44,7 @@ El propósito de la aplicación es transformar la gestión tradicional de una as
 - **Calendario de Eventos**: Publicación y gestión de actividades del barrio con control de visibilidad y confirmación de asistencia.
 - **Consultas Vecinales**: Sistema de encuestas participativas con tipos de pregunta mixtos, anonimato garantizado y exportación de resultados para la toma de decisiones.
 - **Gestión de Noticias**: Canal de comunicación oficial de noticias con editor de texto enriquecido y segmentación de audiencia (General vs Socios).
-- **Gestión de Incidencias**: Canal de comunicación oficial de eventos con editor de texto enriquecido y segmentación de audiencia (General vs Socios).
+-  **Gestión de Incidencias**: Canal de comunicación oficial de incidencias con editor de texto enriquecido y segmentación de audiencia (General vs Socios).
 - **Diseño Premium**: Interfaz moderna basada en *Glassmorphism* y animaciones sutiles para una experiencia de usuario superior.
 
 ### **1.3. Diseño y experiencia de usuario:**
@@ -77,20 +76,45 @@ El proyecto está completamente dockerizado para facilitar su despliegue:
 ### **2.1. Diagrama de arquitectura:**
 El sistema sigue el patrón de **Arquitectura Hexagonal (Puertos y Adaptadores)**, lo que permite desacoplar la lógica de negocio de las tecnologías externas.
 
+#### 2.1.1. Diagrama de Contexto
 ```mermaid
 C4Context
-    title Diagrama de Contexto - AVV PAU2
-    Person(user, "Vecino", "Admin, Socio o Simpatizante")
+    title System Context Diagram - AVV PAU2
+    Person(neighbor, "Neighbor", "Member, Supporter or Visitor")
+    Person(admin, "Administrator", "Board member managing content")
     
-    System_Boundary(app_boundary, "Plataforma AVV PAU2") {
-        Container(frontend, "Frontend", "React + Vite", "Interfaz de usuario con diseño premium.")
-        Container(backend, "Backend API", "FastAPI (Python)", "Lógica de negocio y persistencia.")
-        ContainerDb(database, "Base de Datos", "PostgreSQL", "Almacenamiento persistente.")
+    System_Boundary(app_boundary, "Asociación de Vecinos Platform") {
+        Container(react_app, "Frontend SPA", "React 19", "Modern UI with Glassmorphism")
+        Container(fastapi_api, "Backend API", "FastAPI (Python)", "Business logic and Auth")
+        ContainerDb(db, "PostgreSQL", "Relational DB", "Persistent storage")
     }
 
-    Rel(user, frontend, "Navega", "HTTPS")
-    Rel(frontend, backend, "Consume API (JWT)", "JSON/HTTPS")
-    Rel(backend, database, "Persiste", "SQL/TCP")
+    Rel(neighbor, react_app, "Views news and events, participates in consultations")
+    Rel(admin, react_app, "Manages users, news, and neighborhood activities")
+    Rel(react_app, fastapi_api, "HTTPS / JSON / JWT")
+    Rel(fastapi_api, db, "SQLAlchemy ORM")
+```
+
+#### 2.1.2. Flujo de Petición (Hexagonal)
+```mermaid
+sequenceDiagram
+    participant UI as Frontend (React)
+    participant API as Presentation (FastAPI)
+    participant UC as Application (Use Case)
+    participant DOM as Domain (Entity)
+    participant INF as Infrastructure (Repo)
+    participant DB as Database (Postgres)
+
+    UI->>API: POST /consultations/
+    API->>API: Validate input (Pydantic)
+    API->>UC: Execute CreateConsultation
+    UC->>DOM: Instantiate Entity
+    UC->>INF: Save(Entity)
+    INF->>DB: INSERT INTO consultations
+    DB-->>INF: Confirmation
+    INF-->>UC: ID Created
+    UC-->>API: Result Object
+    API-->>UI: 201 Created (JSON)
 ```
 
 **Justificación**: Se eligió esta arquitectura para garantizar la **testabilidad** de la lógica de negocio sin depender de la base de datos o frameworks de presentación. El sacrificio inicial es una mayor complejidad en la estructura de carpetas, pero el beneficio es una mantenibilidad a largo plazo muy superior.
@@ -129,50 +153,137 @@ El despliegue se gestiona mediante **Docker Compose**, orquestando tres contened
 
 ```mermaid
 erDiagram
+    %% Core Module
     USER {
         int id PK
         string email UK
+        string password_hash
         string full_name
+        string phone
         enum role
         boolean is_active
+        datetime created_at
     }
 
+    %% Event Module
     EVENT {
         int id PK
         string title
+        string description
         datetime start_time
+        datetime end_time
+        string location
+        string organizer
         enum event_type
         enum status
-        int created_by FK
+        boolean is_published
+        int created_by
+        datetime created_at
+        datetime updated_at
     }
 
+    EVENT_REGISTRATION {
+        int id PK
+        int event_id FK
+        int user_id FK
+        enum status
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% Consultation Module
     CONSULTATION {
         int id PK
         string title
+        string description
+        datetime open_date
+        datetime close_date
         enum audience
         enum status
+        enum results_visibility
         int created_by FK
+        datetime created_at
+        datetime updated_at
     }
 
     QUESTION {
         int id PK
         int consultation_id FK
         string title
+        string description
+        int order
         enum question_type
+        enum selection_mode
     }
 
+    QUESTION_OPTION {
+        int id PK
+        int question_id FK
+        string text
+        int order
+    }
+
+    CONSULTATION_RESPONSE {
+        int id PK
+        int consultation_id FK
+        int user_id FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    ANSWER {
+        int id PK
+        int response_id FK
+        int question_id FK
+        int selected_option_id FK
+        text text_answer
+    }
+
+    %% News Module
     NEWS {
         int id PK
         string title
+        string summary
         text content
+        string cover_url
         enum status
+        enum scope
         int author_id FK
+        datetime published_at
+        datetime created_at
+        datetime updated_at
+        boolean is_deleted
     }
 
-    USER ||--o{ EVENT : "crea"
-    USER ||--o{ CONSULTATION : "crea"
-    USER ||--o{ NEWS : "escribe"
-    CONSULTATION ||--o{ QUESTION : "contiene"
+    %% Incident Module
+    INCIDENT {
+        int id PK
+        string title
+        string description
+        string location
+        enum status
+        int user_id FK
+        string image_url
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% Relationships
+    USER ||--o{ EVENT_REGISTRATION : registers
+    EVENT ||--o{ EVENT_REGISTRATION : hosts
+    
+    USER ||--o{ CONSULTATION : creates
+    CONSULTATION ||--o{ QUESTION : contains
+    QUESTION ||--o{ QUESTION_OPTION : contains
+    
+    USER ||--o{ CONSULTATION_RESPONSE : submits
+    CONSULTATION ||--o{ CONSULTATION_RESPONSE : receives
+    CONSULTATION_RESPONSE ||--o{ ANSWER : includes
+    QUESTION ||--o{ ANSWER : answers
+    QUESTION_OPTION ||--o{ ANSWER : selected_in
+
+    USER ||--o{ NEWS : authors
+    USER ||--o{ INCIDENT : reports
 ```
 
 ### **3.2. Descripción de entidades principales:**
