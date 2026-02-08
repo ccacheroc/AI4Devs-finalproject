@@ -15,7 +15,6 @@
 <a id="ficha-del-proyecto"></a>
 ## 0. Ficha del proyecto
 
-## 0. Ficha del proyecto
 
 ### **0.1. Tu nombre completo:**
 Cristina Cachero
@@ -45,7 +44,8 @@ El propósito de la aplicación es transformar la gestión tradicional de una as
 - **Gestión de Usuarios y RBAC**: Sistema robusto de roles (Admin, Junta, Socio, Simpatizante) con acceso restringido por permisos.
 - **Calendario de Eventos**: Publicación y gestión de actividades del barrio con control de visibilidad y confirmación de asistencia.
 - **Consultas Vecinales**: Sistema de encuestas participativas con tipos de pregunta mixtos, anonimato garantizado y exportación de resultados para la toma de decisiones.
-- **Gestión de Noticias**: Canal de comunicación oficial con editor de texto enriquecido y segmentación de audiencia (General vs Socios).
+- **Gestión de Noticias**: Canal de comunicación oficial de noticias con editor de texto enriquecido y segmentación de audiencia (General vs Socios).
+- **Gestión de Incidencias**: Canal de comunicación oficial de eventos con editor de texto enriquecido y segmentación de audiencia (General vs Socios).
 - **Diseño Premium**: Interfaz moderna basada en *Glassmorphism* y animaciones sutiles para una experiencia de usuario superior.
 
 ### **1.3. Diseño y experiencia de usuario:**
